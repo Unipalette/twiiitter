@@ -1,8 +1,30 @@
-import React, { useState } from "react";
+import { dbService } from "fBase";
+import React, { useEffect, useState } from "react";
 function Home() {
   const [tweeet, setTweet] = useState("");
-  const onSubmit = (e) => {
+  const [tweeets, setTweeets] = useState([]);
+  const getTweeets = async () => {
+    const dbTweeets = await dbService.collection("tweeets").get();
+    dbTweeets.forEach((document) => {
+      const tweeetObject = {
+        ...document.data(),
+        id: document.id,
+      };
+      setTweeets((prev) => [tweeetObject, ...prev]);
+    });
+  };
+
+  useEffect(() => {
+    getTweeets();
+  }, []);
+
+  const onSubmit = async (e) => {
     e.preventDefault();
+    await dbService.collection("tweeets").add({
+      tweeet,
+      createdAt: Date.now(),
+    });
+    setTweet("");
   };
   const onChange = (e) => {
     const {
@@ -10,7 +32,7 @@ function Home() {
     } = e;
     setTweet(value);
   };
-  console.log(tweeet);
+
   return (
     <div>
       <form onSubmit={onSubmit}>
@@ -23,6 +45,13 @@ function Home() {
         />
         <input type="submit" value="tweeet"></input>
       </form>
+      <div>
+        {tweeets.map((tweeet) => (
+          <div key={tweeet.id}>
+            <h4>{tweeet.tweeet}</h4>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
